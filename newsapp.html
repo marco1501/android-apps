@@ -48,6 +48,11 @@
         .news-content { padding: 15px; }
         .news-title { font-size: 16px; font-weight: 700; line-height: 1.3; text-decoration: none; color: inherit; }
 
+        /* Web View Frame */
+        #web-view-container { display: none; width: 100%; height: calc(100vh - 185px); position: relative; }
+        iframe { width: 100%; height: 100%; border: none; }
+        #blocked-hint { display: none; position: absolute; inset: 0; background: var(--bg); flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; z-index: 10; }
+
         #settings-panel { 
             position: fixed; inset: 0; background: var(--bg); padding: 30px; 
             display: none; flex-direction: column; z-index: 1000; overflow-y: auto; 
@@ -69,7 +74,6 @@
         .circle-ui { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; appearance: none; background: none; padding: 0; }
         .circle-ui::-webkit-color-swatch { border: none; border-radius: 50%; }
 
-        /* Toggle Switch Styling */
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
@@ -94,7 +98,15 @@
 
 <header><div class="logo">MARCO'S NEWS APP</div></header>
 <div class="category-bar" id="categoryBar"></div>
-<div class="news-container" id="newsContainer"></div>
+
+<div id="newsContainer" class="news-container"></div>
+<div id="web-view-container">
+    <div id="blocked-hint">
+        <p style="font-weight: bold; margin-bottom: 10px;">Seite blockiert App-Ansicht</p>
+        <button id="externalLink" style="padding: 10px 20px; border-radius: 10px; border: none; background: var(--accent); color: white; font-weight: bold;">EXTERN ÖFFNEN</button>
+    </div>
+    <iframe id="webFrame" src=""></iframe>
+</div>
 
 <div id="settings-panel">
     <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -111,7 +123,7 @@
 
     <h4>Neue Quelle</h4>
     <input type="text" id="newName" placeholder="Name">
-    <input type="text" id="newQuery" placeholder="RSS-Link oder Suchwort">
+    <input type="text" id="newQuery" placeholder="RSS-Link oder Web-URL">
     <button onclick="addTopic()" style="width:100%; padding:12px; background:var(--txt); color:var(--bg); border:none; border-radius:12px; font-weight:bold;">HINZUFÜGEN</button>
 
     <h4>Themen & Links</h4>
@@ -134,18 +146,28 @@
     <div class="icon-btn" onclick="location.reload()">
         <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
     </div>
+
+    <div class="icon-btn" title="Wechsel Feed / Webseite">
+        <label class="switch">
+            <input type="checkbox" id="modeToggle" onchange="toggleViewMode()">
+            <span class="slider"></span>
+        </label>
+    </div>
+
     <div class="icon-btn" onclick="toggleSettings()">
         <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
     </div>
 </footer>
 
 <script>
-    const STORAGE_KEY = 'marco_news_v13';
+    const STORAGE_KEY = 'marco_news_v13_stable';
     let config = {
         dark: false, bg: "#ffffff", accent: "#1a73e8", txt: "#000000",
+        webMode: false,
+        currentIdx: 0,
         topics: [
             {name: "Tagesschau", q: "https://www.tagesschau.de/infosilla/archive/alle-meldungen-100~rss2.xml"},
-            {name: "Bild", q: "https://www.bild.de/rss/index.xml"}
+            {name: "Google News", q: "https://news.google.com/publications/CAAqIAgKIhpDQklTRFFnTWFna0tCMkpwYkdRdVpHVW9BQVAB?ceid=DE:de&oc=3"}
         ]
     };
 
@@ -158,6 +180,7 @@
     function apply() {
         document.body.classList.toggle('dark-mode', config.dark);
         document.getElementById('darkToggle').checked = config.dark;
+        document.getElementById('modeToggle').checked = config.webMode;
         document.documentElement.style.setProperty('--bg', config.bg);
         document.documentElement.style.setProperty('--accent', config.accent);
         document.documentElement.style.setProperty('--txt', config.txt);
@@ -167,12 +190,9 @@
         render();
     }
 
-    function updateUI() {
-        config.dark = document.getElementById('darkToggle').checked;
-        config.bg = document.getElementById('bgPicker').value;
-        config.accent = document.getElementById('accentPicker').value;
-        config.txt = document.getElementById('txtPicker').value;
-        save(); apply();
+    function toggleViewMode() {
+        config.webMode = document.getElementById('modeToggle').checked;
+        save(); render();
     }
 
     function render() {
@@ -182,9 +202,9 @@
         
         config.topics.forEach((t, i) => {
             const btn = document.createElement('button');
-            btn.className = 'category-tag';
+            btn.className = 'category-tag' + (i === config.currentIdx ? ' active' : '');
             btn.innerText = t.name;
-            btn.onclick = () => fetchNews(t.q, btn);
+            btn.onclick = () => { config.currentIdx = i; save(); render(); };
             bar.appendChild(btn);
             
             list.innerHTML += `
@@ -196,18 +216,39 @@
                     <input type="text" class="topic-url-edit" value="${t.q}" onchange="editTopic(${i}, 'q', this.value)">
                 </div>`;
         });
-        if(config.topics.length > 0) fetchNews(config.topics[0].q, bar.firstChild);
+
+        const activeTopic = config.topics[config.currentIdx];
+        const newsCont = document.getElementById('newsContainer');
+        const webCont = document.getElementById('web-view-container');
+        const frame = document.getElementById('webFrame');
+        const hint = document.getElementById('blocked-hint');
+
+        if(config.webMode) {
+            newsCont.style.display = 'none';
+            webCont.style.display = 'block';
+            
+            // URL Korrektur (verhindert "Cannot GET")
+            let url = activeTopic.q;
+            if(!url.startsWith('http')) url = 'https://' + url;
+            
+            // Check ob geblockt (Google/Bild etc.)
+            const isBlocked = ["google.com", "bild.de", "spiegel.de"].some(s => url.includes(s));
+            hint.style.display = isBlocked ? 'flex' : 'none';
+            document.getElementById('externalLink').onclick = () => window.open(url, '_blank');
+            
+            if(frame.src !== url) frame.src = url;
+        } else {
+            webCont.style.display = 'none';
+            newsCont.style.display = 'block';
+            fetchNews(activeTopic.q);
+        }
     }
 
-    async function fetchNews(q, btn) {
-        document.querySelectorAll('.category-tag').forEach(b => b.classList.remove('active'));
-        if(btn) btn.classList.add('active');
+    async function fetchNews(q) {
         const cont = document.getElementById('newsContainer');
         cont.innerHTML = '<p style="text-align:center; padding:50px; opacity:0.5; font-size:12px;">Lädt...</p>';
-        
         let url = q.startsWith('http') ? q : `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=de&gl=DE&ceid=DE:de`;
         const api = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`;
-
         try {
             const r = await fetch(api);
             const d = await r.json();
@@ -219,7 +260,6 @@
                     if (match) img = match[1];
                 }
                 if(!img) img = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=500";
-
                 cont.innerHTML += `
                 <div class="news-card">
                     <a href="${item.link}" target="_blank" style="text-decoration:none; color:inherit;">
@@ -233,16 +273,21 @@
 
     function editTopic(i, field, val) { config.topics[i][field] = val; save(); render(); }
     function addTopic() {
-        const n = document.getElementById('newName').value;
-        const q = document.getElementById('newQuery').value;
+        const n = document.getElementById('newName').value, q = document.getElementById('newQuery').value;
         if(n && q) { config.topics.push({name:n, q:q}); save(); apply(); }
     }
-    function remove(i) { config.topics.splice(i, 1); save(); apply(); }
+    function remove(i) { config.topics.splice(i, 1); if(config.currentIdx >= config.topics.length) config.currentIdx = 0; save(); apply(); }
     function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(config)); }
+    function updateUI() {
+        config.dark = document.getElementById('darkToggle').checked;
+        config.bg = document.getElementById('bgPicker').value;
+        config.accent = document.getElementById('accentPicker').value;
+        config.txt = document.getElementById('txtPicker').value;
+        save(); apply();
+    }
     function toggleSettings() { document.getElementById('settings-panel').classList.toggle('active'); }
     function exportConfig() { document.getElementById('syncData').value = btoa(JSON.stringify(config)); }
     function importConfig() { try { config = JSON.parse(atob(document.getElementById('syncData').value)); save(); apply(); } catch(e){ alert("Ungültig!"); } }
-
     window.onload = load;
 </script>
 </body>
