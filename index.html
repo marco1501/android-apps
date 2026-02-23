@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Bundle 2026</title>
+    <link rel="manifest" href='data:application/manifest+json,{"name":"News Bundle","short_name":"News","start_url":"index.html","display":"standalone","background_color":"#ffffff","theme_color":"#1a73e8","icons":[{"src":"https://via.placeholder.com/192/1a73e8/ffffff?text=N","sizes":"192x192","type":"image/png"}]}'>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #1a73e8; --bg: #f8f9fa; }
+        body { font-family: 'Roboto', sans-serif; background: var(--bg); margin: 0; padding: 0; color: #202124; }
+        
+        /* Android App Bar Style */
+        header { 
+            background: var(--primary); color: white; padding: 16px; 
+            font-size: 22px; font-weight: 500; position: sticky; top: 0; 
+            z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        /* Kategorien-Leiste */
+        .category-bar { 
+            display: flex; overflow-x: auto; background: white; 
+            padding: 12px; gap: 8px; border-bottom: 1px solid #ddd;
+            scrollbar-width: none; /* Hide scrollbar */
+        }
+        .category-bar::-webkit-scrollbar { display: none; }
+        
+        .category-tag { 
+            background: #e8f0fe; color: var(--primary); padding: 8px 20px; 
+            border-radius: 25px; white-space: nowrap; cursor: pointer; 
+            border: 1px solid transparent; font-weight: 500; transition: 0.3s;
+        }
+        .category-tag.active { background: var(--primary); color: white; }
+
+        /* News Cards */
+        .news-container { padding: 16px; max-width: 600px; margin: 0 auto; }
+        .news-card { 
+            background: white; border-radius: 16px; margin-bottom: 20px; 
+            overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+        }
+        .news-card:active { transform: scale(0.98); }
+        .news-card img { width: 100%; height: 210px; object-fit: cover; background: #e0e0e0; }
+        .news-content { padding: 16px; }
+        .news-title { font-size: 18px; font-weight: 700; margin: 0 0 10px 0; line-height: 1.3; }
+        .news-meta { font-size: 12px; color: #70757a; margin-bottom: 10px; display: flex; justify-content: space-between; }
+        .news-desc { font-size: 14px; color: #4d5156; line-height: 1.5; margin-bottom: 15px; }
+        
+        .btn-read { 
+            display: inline-block; color: var(--primary); text-decoration: none; 
+            font-weight: 700; text-transform: uppercase; font-size: 14px; letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <span>News Bundle</span>
+</header>
+
+<div class="category-bar" id="categoryBar"></div>
+
+<div class="news-container" id="newsContainer">
+    <div style="text-align: center; margin-top: 50px; color: #70757a;">Lade deine News...</div>
+</div>
+
+<script>
+    // DEINE THEMEN (Hier einfach anpassen!)
+    const myTopics = [
+        { name: "Top-Storys", query: "" },
+        { name: "Technologie", query: "Technologie" },
+        { name: "Raumfahrt", query: "Weltraum" },
+        { name: "KI", query: "Künstliche Intelligenz" }
+    ];
+
+    // SERVICE WORKER REGISTRIERUNG
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+    }
+
+    async function fetchNews(query, activeBtn) {
+        // Aktiven Button markieren
+        document.querySelectorAll('.category-tag').forEach(b => b.classList.remove('active'));
+        activeBtn.classList.add('active');
+
+        const container = document.getElementById('newsContainer');
+        container.innerHTML = '<div style="text-align: center; margin-top: 50px;">Suche aktuelle Artikel...</div>';
+        
+        // RSS2JSON API (kostenlos bis zu einer gewissen Menge)
+        const rssUrl = query === "" 
+            ? `https://news.google.com/rss?hl=de&gl=DE&ceid=DE:de`
+            : `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=de&gl=DE&ceid=DE:de`;
+        
+        const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+
+        try {
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+            
+            container.innerHTML = "";
+            data.items.forEach(item => {
+                // Bild-Extraktion (manchmal liefert der Feed ein Thumbnail)
+                let image = item.thumbnail || item.enclosure.link || '';
+                // Falls kein Bild da ist, ein schickes Platzhalter-Bild mit Thema
+                if(!image) image = `https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=500&q=80`;
+
+                const card = document.createElement('div');
+                card.className = 'news-card';
+                card.innerHTML = `
+                    <img src="${image}" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-meta">
+                            <span>${item.pubDate.split(' ')[0]}</span>
+                            <span>${item.author || 'Google News'}</span>
+                        </div>
+                        <h3 class="news-title">${item.title}</h3>
+                        <p class="news-desc">${item.description.replace(/<[^>]*>?/gm, '').substring(0, 120)}...</p>
+                        <a href="${item.link}" target="_blank" class="btn-read">Bericht lesen</a>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        } catch (error) {
+            container.innerHTML = "<p>Fehler beim Laden. Bitte Internetverbindung prüfen.</p>";
+        }
+    }
+
+    // Kategorien-Leiste initialisieren
+    const bar = document.getElementById('categoryBar');
+    myTopics.forEach((topic, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'category-tag';
+        if(index === 0) btn.classList.add('active');
+        btn.innerText = topic.name;
+        btn.onclick = () => fetchNews(topic.query, btn);
+        bar.appendChild(btn);
+    });
+
+    // Start-Laden
+    window.onload = () => fetchNews(myTopics[0].query, document.querySelector('.category-tag'));
+</script>
+</body>
+</html>
