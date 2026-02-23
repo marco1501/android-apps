@@ -2,144 +2,160 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Marco's News App</title>
-    <link rel="icon" type="image/png" href="icon.png">
-    <link rel="apple-touch-icon" href="icon.png">
+    
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Marcos News","short_name":"News","start_url":"index.html","display":"standalone","background_color":"#ffffff","theme_color":"#1a73e8","icons":[{"src":"https://via.placeholder.com/192/1a73e8/ffffff?text=M","sizes":"192x192","type":"image/png"}]}'>
+    
     <link href="https://fonts.googleapis.com/css2?family=Rubik+Mono+One&display=swap" rel="stylesheet">
     <style>
         :root { 
-            --bg: #ffffff; --txt: #000000; --glass: rgba(255, 255, 255, 0.95); 
-            --border: rgba(0, 0, 0, 0.1); --accent: #1a73e8; --input-bg: #f5f5f5;
+            --bg: #ffffff; --txt: #000000; --accent: #1a73e8; --input-bg: #f5f5f5; --border: rgba(0,0,0,0.1); --glass: rgba(255, 255, 255, 0.9);
         }
         body.dark-mode { 
-            --bg: #000000; --txt: #ffffff; --glass: rgba(20, 20, 20, 0.98); 
-            --border: rgba(255, 255, 255, 0.15); --input-bg: #222222;
+            --bg: #000000; --txt: #ffffff; --accent: #1a73e8; --input-bg: #222222; --border: rgba(255,255,255,0.15); --glass: rgba(20, 20, 20, 0.95);
         }
-
+        
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { 
-            background-color: var(--bg); color: var(--txt); 
-            font-family: "Segoe UI", sans-serif; transition: background 0.3s;
-        }
-
+        body { background: var(--bg); color: var(--txt); font-family: "Segoe UI", sans-serif; transition: background 0.3s; overflow-x: hidden; }
+        
         header { 
-            height: 60px; display: flex; align-items: center; justify-content: center;
-            background: var(--glass); backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100;
+            height: 60px; display: flex; align-items: center; justify-content: center; 
+            border-bottom: 1px solid var(--border); position: sticky; top: 0; 
+            background: var(--glass); backdrop-filter: blur(10px); z-index: 100; 
         }
-        .logo { font-family: 'Rubik Mono One', sans-serif; font-size: 13px; letter-spacing: -1px; }
+        .logo { font-family: 'Rubik Mono One', sans-serif; font-size: 13px; letter-spacing: -0.5px; }
 
         .category-bar { 
-            display: flex; overflow-x: auto; padding: 12px 20px; gap: 8px;
-            background: var(--bg); scrollbar-width: none; border-bottom: 1px solid var(--border);
+            display: flex; overflow-x: auto; padding: 12px; gap: 8px; 
+            border-bottom: 1px solid var(--border); scrollbar-width: none; background: var(--bg);
         }
         .category-bar::-webkit-scrollbar { display: none; }
         .category-tag { 
             background: var(--input-bg); color: var(--txt); padding: 8px 16px; 
-            border-radius: 20px; border: none; font-size: 11px; font-weight: 700;
-            cursor: pointer; white-space: nowrap; transition: 0.2s;
+            border-radius: 20px; border: none; font-size: 11px; font-weight: 700; white-space: nowrap; transition: 0.2s;
         }
         .category-tag.active { background: var(--accent); color: #fff; }
 
-        .news-container { padding: 20px; max-width: 600px; margin: 0 auto; padding-bottom: 100px; }
+        .news-container { padding: 20px; max-width: 600px; margin: 0 auto; padding-bottom: 90px; }
         .news-card { 
             background: var(--bg); border: 1px solid var(--border); border-radius: 24px; 
-            margin-bottom: 25px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            margin-bottom: 25px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.05); 
         }
-        
-        .card-link { text-decoration: none; color: inherit; display: block; }
-        .news-card img { width: 100%; height: 230px; object-fit: cover; display: block; background: #eee; }
-        
-        .news-content { padding: 20px; }
-        .news-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; line-height: 1.3; }
-        .news-desc { font-size: 13px; opacity: 0.7; line-height: 1.5; }
+        .news-card img { width: 100%; height: 210px; object-fit: cover; background: #eee; border: none; display: block; cursor: pointer; }
+        .news-content { padding: 15px; }
+        .news-title { font-size: 16px; font-weight: 700; line-height: 1.3; text-decoration: none; color: inherit; }
 
         #settings-panel { 
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
-            background: var(--glass); backdrop-filter: blur(50px); 
-            padding: 30px; display: none; flex-direction: column; z-index: 1000; overflow-y: auto;
+            position: fixed; inset: 0; background: var(--bg); padding: 30px; 
+            display: none; flex-direction: column; z-index: 1000; overflow-y: auto; 
         }
         #settings-panel.active { display: flex; }
+        
+        h4 { font-size: 10px; text-transform: uppercase; opacity: 0.5; margin: 20px 0 10px; letter-spacing: 1px; }
+        input, textarea { background: var(--input-bg); color: var(--txt); border: 1px solid var(--border); padding: 12px; border-radius: 12px; width: 100%; margin-bottom: 10px; font-family: inherit; }
+        
+        .topic-item { 
+            display: flex; flex-direction: column; background: var(--input-bg); 
+            padding: 12px; border-radius: 15px; margin-bottom: 12px; gap: 5px;
+        }
+        .topic-row { display: flex; gap: 10px; align-items: center; }
+        .topic-input-edit { background: none !important; border: none !important; padding: 0 !important; font-weight: 700; font-size: 13px; color: inherit; flex-grow: 1; margin: 0; }
+        .topic-url-edit { background: none !important; border: none !important; padding: 0 !important; font-size: 11px; opacity: 0.5; color: inherit; margin: 0; }
 
+        .sw-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .circle-ui { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; appearance: none; background: none; padding: 0; }
         .circle-ui::-webkit-color-swatch { border: none; border-radius: 50%; }
 
-        .toggle { position: relative; width: 44px; height: 24px; display: inline-block; }
-        .toggle input { opacity: 0; width: 0; height: 0; }
-        .slider-toggle { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #ccc; border-radius: 24px; transition: 0.3s; }
-        .slider-toggle:before { content: ""; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.3s; }
-        input:checked + .slider-toggle { background: var(--accent); }
-        input:checked + .slider-toggle:before { transform: translateX(20px); }
-
-        .sw-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        input[type="text"], textarea { background: var(--input-bg); color: var(--txt); border: 1px solid var(--border); padding: 12px; border-radius: 12px; width: 100%; font-family: inherit; margin-bottom: 8px; }
-
-        .topic-item { display: flex; align-items: center; background: rgba(128,128,128,0.1); padding: 10px 15px; border-radius: 15px; margin-bottom: 10px; gap: 10px; }
-        .topic-input-edit { background: none !important; border: none !important; padding: 0 !important; font-weight: 700; font-size: 13px; flex-grow: 1; color: inherit; }
+        /* Toggle Switch Styling */
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--accent); }
+        input:checked + .slider:before { transform: translateX(20px); }
 
         footer { 
             position: fixed; bottom: 0; width: 100%; height: 65px; 
-            background: var(--glass); backdrop-filter: blur(20px);
+            background: var(--glass); backdrop-filter: blur(10px);
             border-top: 1px solid var(--border); display: flex; 
             justify-content: space-around; align-items: center; z-index: 100;
         }
-        .f-btn { cursor: pointer; font-size: 10px; font-weight: 700; opacity: 0.6; text-transform: uppercase; }
+        .icon-btn { 
+            width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; transition: transform 0.2s; fill: var(--txt); opacity: 0.8;
+        }
+        .icon-btn svg { width: 24px; height: 24px; }
     </style>
 </head>
-<body class="light-mode">
+<body>
 
 <header><div class="logo">MARCO'S NEWS APP</div></header>
 <div class="category-bar" id="categoryBar"></div>
 <div class="news-container" id="newsContainer"></div>
 
 <div id="settings-panel">
-    <div style="display:flex; justify-content:space-between; align-items:center;"><h2>Settings</h2><div style="cursor:pointer; font-size:35px;" onclick="toggleSettings()">×</div></div>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2>Settings</h2>
+        <div style="cursor:pointer; font-size:30px;" onclick="toggleSettings()">×</div>
+    </div>
     
-    <h4 style="font-size:10px; margin-top:20px; opacity:0.5;">SYNC CODE</h4>
-    <textarea id="syncData" placeholder="Sync-Code hier..."></textarea>
-    <div style="display:flex; gap:10px; margin-top:5px;">
+    <h4>Sync Code</h4>
+    <textarea id="syncData" placeholder="Code einfügen/kopieren..."></textarea>
+    <div style="display:flex; gap:10px;">
         <button onclick="exportConfig()" style="flex:1; padding:10px; border-radius:10px; border:none;">Copy</button>
         <button onclick="importConfig()" style="flex:1; padding:10px; border-radius:10px; border:none; background:var(--accent); color:#fff;">Import</button>
     </div>
 
-    <h4 style="font-size:10px; margin-top:20px; opacity:0.5;">NEUE QUELLE HINZUFÜGEN</h4>
-    <input type="text" id="newName" placeholder="Anzeigename (z.B. Tagesschau)">
-    <input type="text" id="newQuery" placeholder="Suchwort ODER RSS-Link (XML)">
-    <button onclick="addTopic()" style="width:100%; padding:12px; border-radius:12px; border:none; background:var(--txt); color:var(--bg); font-weight:bold;">HINZUFÜGEN</button>
+    <h4>Neue Quelle</h4>
+    <input type="text" id="newName" placeholder="Name">
+    <input type="text" id="newQuery" placeholder="RSS-Link oder Suchwort">
+    <button onclick="addTopic()" style="width:100%; padding:12px; background:var(--txt); color:var(--bg); border:none; border-radius:12px; font-weight:bold;">HINZUFÜGEN</button>
 
-    <h4 style="font-size:10px; margin-top:20px; opacity:0.5;">LISTE BEARBEITEN</h4>
+    <h4>Themen & Links</h4>
     <div id="topics-list"></div>
 
-    <h4 style="font-size:10px; margin-top:20px; opacity:0.5;">DESIGN</h4>
-    <div class="sw-row"><span>Dark Mode</span><label class="toggle"><input type="checkbox" id="darkToggle" onchange="updateUI()"><span class="slider-toggle"></span></label></div>
+    <h4>Design</h4>
+    <div class="sw-row">
+        <span>Dark Mode</span>
+        <label class="switch">
+            <input type="checkbox" id="darkToggle" onchange="updateUI()">
+            <span class="slider"></span>
+        </label>
+    </div>
+    <div class="sw-row"><span>Akzentfarbe</span><input type="color" id="accentPicker" class="circle-ui" onchange="updateUI()"></div>
     <div class="sw-row"><span>Hintergrund</span><input type="color" id="bgPicker" class="circle-ui" onchange="updateUI()"></div>
-    <div class="sw-row"><span>Akzent</span><input type="color" id="accentPicker" class="circle-ui" onchange="updateUI()"></div>
-    <div class="sw-row"><span>Text</span><input type="color" id="txtPicker" class="circle-ui" onchange="updateUI()"></div>
+    <div class="sw-row"><span>Textfarbe</span><input type="color" id="txtPicker" class="circle-ui" onchange="updateUI()"></div>
 </div>
 
 <footer>
-    <div class="f-btn" onclick="location.reload()">Refresh</div>
-    <div class="f-btn" onclick="toggleSettings()">Settings</div>
+    <div class="icon-btn" onclick="location.reload()">
+        <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+    </div>
+    <div class="icon-btn" onclick="toggleSettings()">
+        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+    </div>
 </footer>
 
 <script>
-    const STORAGE_KEY = 'marco_news_v7';
+    const STORAGE_KEY = 'marco_news_v13';
     let config = {
         dark: false, bg: "#ffffff", accent: "#1a73e8", txt: "#000000",
         topics: [
             {name: "Tagesschau", q: "https://www.tagesschau.de/infosilla/archive/alle-meldungen-100~rss2.xml"},
-            {name: "Tech Suche", q: "Technologie"}
+            {name: "Bild", q: "https://www.bild.de/rss/index.xml"}
         ]
     };
 
-    function loadConfig() {
+    function load() {
         const saved = localStorage.getItem(STORAGE_KEY);
         if(saved) config = JSON.parse(saved);
-        applyConfig();
+        apply();
     }
 
-    function applyConfig() {
+    function apply() {
         document.body.classList.toggle('dark-mode', config.dark);
         document.getElementById('darkToggle').checked = config.dark;
         document.documentElement.style.setProperty('--bg', config.bg);
@@ -148,7 +164,7 @@
         document.getElementById('bgPicker').value = config.bg;
         document.getElementById('accentPicker').value = config.accent;
         document.getElementById('txtPicker').value = config.txt;
-        renderTopics();
+        render();
     }
 
     function updateUI() {
@@ -156,95 +172,78 @@
         config.bg = document.getElementById('bgPicker').value;
         config.accent = document.getElementById('accentPicker').value;
         config.txt = document.getElementById('txtPicker').value;
-        save(); applyConfig();
+        save(); apply();
     }
 
-    function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(config)); }
-
-    function renderTopics() {
-        const list = document.getElementById('topics-list');
-        list.innerHTML = "";
-        config.topics.forEach((t, i) => {
-            list.innerHTML += `
-                <div class="topic-item">
-                    <input type="text" class="topic-input-edit" value="${t.name}" onchange="editTopic(${i}, this.value)">
-                    <span style="cursor:pointer; opacity:0.3; font-weight:bold;" onclick="removeTopic(${i})">×</span>
-                </div>`;
-        });
+    function render() {
         const bar = document.getElementById('categoryBar');
-        bar.innerHTML = "";
-        config.topics.forEach((t) => {
+        const list = document.getElementById('topics-list');
+        bar.innerHTML = ""; list.innerHTML = "";
+        
+        config.topics.forEach((t, i) => {
             const btn = document.createElement('button');
             btn.className = 'category-tag';
             btn.innerText = t.name;
             btn.onclick = () => fetchNews(t.q, btn);
             bar.appendChild(btn);
+            
+            list.innerHTML += `
+                <div class="topic-item">
+                    <div class="topic-row">
+                        <input type="text" class="topic-input-edit" value="${t.name}" onchange="editTopic(${i}, 'name', this.value)">
+                        <span style="cursor:pointer; color:red; font-weight:bold; padding: 5px;" onclick="remove(${i})">×</span>
+                    </div>
+                    <input type="text" class="topic-url-edit" value="${t.q}" onchange="editTopic(${i}, 'q', this.value)">
+                </div>`;
         });
         if(config.topics.length > 0) fetchNews(config.topics[0].q, bar.firstChild);
     }
 
-    async function fetchNews(query, btn) {
-        if(btn) {
-            document.querySelectorAll('.category-tag').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        }
-        const container = document.getElementById('newsContainer');
-        container.innerHTML = '<p style="text-align:center; padding:50px; opacity:0.5; font-size:12px;">Lade Artikel...</p>';
-
-        let finalUrl = query;
-        if (!query.startsWith('http')) {
-            finalUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=de&gl=DE&ceid=DE:de`;
-        }
-
-        const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(finalUrl)}`;
+    async function fetchNews(q, btn) {
+        document.querySelectorAll('.category-tag').forEach(b => b.classList.remove('active'));
+        if(btn) btn.classList.add('active');
+        const cont = document.getElementById('newsContainer');
+        cont.innerHTML = '<p style="text-align:center; padding:50px; opacity:0.5; font-size:12px;">Lädt...</p>';
+        
+        let url = q.startsWith('http') ? q : `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=de&gl=DE&ceid=DE:de`;
+        const api = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`;
 
         try {
-            const res = await fetch(apiUrl);
-            const data = await res.json();
-            container.innerHTML = "";
-            
-            data.items.forEach((item) => {
+            const r = await fetch(api);
+            const d = await r.json();
+            cont.innerHTML = "";
+            d.items.forEach(item => {
                 let img = item.thumbnail || (item.enclosure && item.enclosure.link);
-                
-                // Falls kein Bild da ist, versuchen wir es aus der Beschreibung zu kratzen
-                if (!img && item.description.includes('<img')) {
-                    const doc = new DOMParser().parseFromString(item.description, 'text/html');
-                    img = doc.querySelector('img')?.src;
+                if(!img && item.description) {
+                    const match = item.description.match(/<img[^>]+src="([^">]+)"/);
+                    if (match) img = match[1];
                 }
+                if(!img) img = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=500";
 
-                if (!img) img = `https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&q=80`;
-
-                container.innerHTML += `
-                    <div class="news-card">
-                        <a href="${item.link}" target="_blank" class="card-link">
-                            <img src="${img}" onerror="this.src='https://via.placeholder.com/600x400?text=News'">
-                            <div class="news-content">
-                                <div class="news-title">${item.title}</div>
-                                <div class="news-desc">${item.description.replace(/<[^>]*>?/gm, '').substring(0, 130)}...</div>
-                            </div>
-                        </a>
-                    </div>`;
+                cont.innerHTML += `
+                <div class="news-card">
+                    <a href="${item.link}" target="_blank" style="text-decoration:none; color:inherit;">
+                        <img src="${img}" onerror="this.src='https://via.placeholder.com/500x300?text=News'">
+                        <div class="news-content"><div class="news-title">${item.title}</div></div>
+                    </a>
+                </div>`;
             });
-        } catch (e) { container.innerHTML = "Fehler beim Laden der Quelle."; }
+        } catch(e) { cont.innerHTML = "Fehler beim Laden."; }
     }
 
-    function editTopic(i, newVal) { config.topics[i].name = newVal; save(); renderTopics(); }
-    function addTopic() { 
-        const name = document.getElementById('newName').value;
+    function editTopic(i, field, val) { config.topics[i][field] = val; save(); render(); }
+    function addTopic() {
+        const n = document.getElementById('newName').value;
         const q = document.getElementById('newQuery').value;
-        if(name && q) { 
-            config.topics.push({name: name, q: q}); 
-            document.getElementById('newName').value = ""; 
-            document.getElementById('newQuery').value = ""; 
-            save(); applyConfig(); 
-        } 
+        if(n && q) { config.topics.push({name:n, q:q}); save(); apply(); }
     }
-    function removeTopic(i) { config.topics.splice(i, 1); save(); applyConfig(); }
-    function exportConfig() { const code = btoa(JSON.stringify(config)); document.getElementById('syncData').value = code; navigator.clipboard.writeText(code); alert("Kopiert!"); }
-    function importConfig() { try { const code = document.getElementById('syncData').value; config = JSON.parse(atob(code)); save(); applyConfig(); alert("Importiert!"); } catch(e) { alert("Code ungültig!"); } }
+    function remove(i) { config.topics.splice(i, 1); save(); apply(); }
+    function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(config)); }
     function toggleSettings() { document.getElementById('settings-panel').classList.toggle('active'); }
+    function exportConfig() { document.getElementById('syncData').value = btoa(JSON.stringify(config)); }
+    function importConfig() { try { config = JSON.parse(atob(document.getElementById('syncData').value)); save(); apply(); } catch(e){ alert("Ungültig!"); } }
 
-    window.onload = loadConfig;
+    window.onload = load;
 </script>
 </body>
 </html>
